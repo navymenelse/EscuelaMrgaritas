@@ -5,7 +5,7 @@ export const mediaItems = [
     type: "image",
     title: "Taller de Costura en Acción",
     description: "Estudiantes confeccionando prendas de vestir con técnicas avanzadas.",
-    src: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", // Imagen de ejemplo
+    src: "../../../public/costura.png", 
     category: "Instalaciones"
   },
   {
@@ -13,7 +13,7 @@ export const mediaItems = [
     type: "image",
     title: "Creaciones de Repostería",
     description: "Exhibición de tortas y dulces elaborados por nuestros graduandos.",
-    src: "https://images.unsplash.com/photo-1586985289906-406988974504?q=80&w=600&auto=format&fit=crop", // Imagen de ejemplo
+    src: "../../../public/repostero.png",
     category: "Logros"
   },
   {
@@ -21,7 +21,7 @@ export const mediaItems = [
     type: "image",
     title: "Clase de Peluquería",
     description: "Prácticas de corte y peinado en nuestro salón formativo.",
-    src: "https://images.unsplash.com/photo-1522337360788-8b13df772a6a?q=80&w=600&auto=format&fit=crop", // Imagen de ejemplo
+    src: "../../../public/peluqueria.png",
     category: "Instalaciones"
   },
   {
@@ -37,7 +37,7 @@ export const mediaItems = [
     type: "image",
     title: "Entrega de Certificados",
     description: "Celebrando el logro de una nueva cohorte de egresados.",
-    src: "https://images.unsplash.com/photo-1523240795204-d948be3895e6?q=80&w=600&auto=format&fit=crop", // Imagen de ejemplo
+    src: "../../../public/certificados.png",
     category: "Eventos"
   },
   {
