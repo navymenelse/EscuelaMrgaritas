@@ -5,7 +5,7 @@ export const mediaItems = [
     type: "image",
     title: "Taller de Costura en Acción",
     description: "Estudiantes confeccionando prendas de vestir con técnicas avanzadas.",
-    src: "../../../public/costura.png", 
+    src: "costura.png", 
     category: "Instalaciones"
   },
   {
@@ -13,7 +13,7 @@ export const mediaItems = [
     type: "image",
     title: "Creaciones de Repostería",
     description: "Exhibición de tortas y dulces elaborados por nuestros graduandos.",
-    src: "../../../public/repostero.png",
+    src: "repostero.png",
     category: "Logros"
   },
   {
@@ -21,7 +21,7 @@ export const mediaItems = [
     type: "image",
     title: "Clase de Peluquería",
     description: "Prácticas de corte y peinado en nuestro salón formativo.",
-    src: "../../../public/peluqueria.png",
+    src: "peluqueria.png",
     category: "Instalaciones"
   },
   {
@@ -37,7 +37,7 @@ export const mediaItems = [
     type: "image",
     title: "Entrega de Certificados",
     description: "Celebrando el logro de una nueva cohorte de egresados.",
-    src: "../../../public/certificados.png",
+    src: "certificados.png",
     category: "Eventos"
   },
   {
