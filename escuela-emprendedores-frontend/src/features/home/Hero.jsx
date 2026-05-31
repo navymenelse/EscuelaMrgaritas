@@ -27,9 +27,9 @@ const Hero = () => {
           {/* Espacio para imagen institucional o ilustración de estudiantes */}
           <div className="bg-gray-200 rounded-2xl h-64 md:h-96 flex items-center justify-center overflow-hidden shadow-inner">
              <span className="text-gray-400 italic text-sm text-center px-4">
-             <img src="./../../public/estud1.jpeg" alt="Imagen Institucional" className="object-cover h-full w-full" />
+             <img src="estud1.jpeg" alt="Imagen Institucional1" className="object-cover h-full w-full" />
              </span>
-          </div>
+          </div> 
         </div>
       </div>
     </section>
