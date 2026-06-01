@@ -37,7 +37,7 @@ export const mediaItems = [
     type: "image",
     title: "Entrega de Certificados",
     description: "Celebrando el logro de una nueva cohorte de egresados.",
-    src: "certif.jpeg",
+    src: "cursos.jpeg",
     category: "Eventos"
   },
   {
