@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+/* Reducción proporcional y global de tipografía en dispositivos móviles */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Baja de 16px a 14px (Aproximadamente un 12.5% más pequeño) */
+  }
+}
+
+body {
+  -webkit-text-size-adjust: 100%; /* Bloquea el escalado automático en Safari/Webkit/Android */
+  -moz-text-size-adjust: 100%;    /* Bloquea en Firefox móvil */
+  text-size-adjust: 100%;         /* Estándar */
+  
+  /* Opcional: Suavizado de fuentes para que no pierdan legibilidad al ser más pequeñas */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
