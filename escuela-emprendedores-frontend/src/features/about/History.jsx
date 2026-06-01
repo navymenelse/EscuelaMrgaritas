@@ -24,10 +24,10 @@ const History = () => {
         </div>
         <div className="md:w-1/2 grid grid-cols-2 gap-4">
           <div className="bg-brand-neutral h-40 rounded-2xl flex items-center justify-center text-gray-400 italic text-xs p-4 text-center">
-            [Foto de archivo: Primera sede 1964]
+            <img src="frenteViejo.jpeg" alt="Taller de carpintería en los años 60" className="w-full h-full object-cover rounded-2xl" />
           </div>
           <div className="bg-brand-neutral h-40 mt-8 rounded-2xl flex items-center justify-center text-gray-400 italic text-xs p-4 text-center">
-            [Foto: Talleres actuales]
+            <img src="pasillo1.jpeg" alt="Taller de carpintería en los años 60" className="w-full h-full object-cover rounded-2xl" />
           </div>
         </div>
       </div>
