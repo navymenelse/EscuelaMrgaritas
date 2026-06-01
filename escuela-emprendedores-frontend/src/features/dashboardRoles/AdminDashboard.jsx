@@ -2,6 +2,7 @@
 import React from 'react';
 import PizarronForm from '../pizarron/PizarronForm';
 import PizarronList from '../pizarron/PizarronList';
+import GestionTablas from './GestionTablas'; // <-- 1. IMPORTAR EL NUEVO COMPONENTE
 
 const AdminDashboard = () => {
   const cards = [
@@ -11,12 +12,13 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <div className="bg-blue-50 border-l-4 border-brand-primary p-4 rounded-r-xl">
         <h2 className="text-xl font-bold text-gray-800">Panel de Control: Administración</h2>
-        <p className="text-xs text-gray-600">Acceso total a la configuración del sistema escolar.</p>
+        <p className="text-xs text-gray-600">Acceso total a la configuración del sistema escolar y base de datos.</p>
       </div>
 
+      {/* Bloque de Tarjetas Informativas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {cards.map((card, idx) => (
           <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -29,10 +31,15 @@ const AdminDashboard = () => {
           </div>
         ))}
       </div>
+
+      {/* 2. INYECTAR EL SUBMÓDULO DE LISTADOS Y DATOS ADMINISTRATIVOS */}
+      <GestionTablas />
+
+      {/* Bloque del Pizarrón Informativo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-  <PizarronForm rolUsuario="administracion" />
-  <PizarronList rolUsuario="administracion" />
-</div>
+        <PizarronForm rolUsuario="administracion" />
+        <PizarronList rolUsuario="administracion" />
+      </div>
     </div>
   );
 };
