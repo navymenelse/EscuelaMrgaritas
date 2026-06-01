@@ -106,9 +106,7 @@ const Navbar = () => {
               </a>
             ))}
             
-            <a href="/login" className="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all font-medium text-sm">
-              Zona Privada
-            </a>
+   
 
             {/* BOTÓN DESPLEGABLE */}
             <div className="relative" ref={dropdownRef}>
@@ -198,9 +196,7 @@ const Navbar = () => {
               {item.name}
             </a>
           ))}
-          <a href="/login" className="block px-4 py-3 text-base font-bold text-brand-primary border-b border-gray-100">
-            Zona Privada
-          </a>
+    
           {auth.active ? (
             <>
               <a href="/portal" className="block px-4 py-3 text-base font-bold text-brand-secondary border-b border-gray-100">
