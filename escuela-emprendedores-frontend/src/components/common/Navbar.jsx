@@ -19,7 +19,6 @@ const Navbar = () => {
     { name: 'Contacto', path: '/contact'}
   ];
 
-  // Matriz de credenciales de prueba con el campo usuarioTipo
   const mockCredentials = [
     { usuario: 'admin', clave: '123456', usuarioTipo: 'administracion' },
     { usuario: 'profe', clave: '654321', usuarioTipo: 'profesor' },
@@ -28,8 +27,9 @@ const Navbar = () => {
 
   useEffect(() => {
     const checkAuth = () => {
-      const active = localStorage.getItem('isUserAuthenticated') === 'true';
-      const type = localStorage.getItem('usuarioTipo') || '';
+      // Cambiado a sessionStorage para que expire al cerrar la pestaña
+      const active = sessionStorage.getItem('isUserAuthenticated') === 'true';
+      const type = sessionStorage.getItem('usuarioTipo') || '';
       setAuth({ active, type });
     };
     checkAuth();
@@ -48,33 +48,45 @@ const Navbar = () => {
     };
   }, []);
 
-const handleLoginSubmit = (e) => {
-  e.preventDefault();
-  
-  // Limpiamos espacios tanto en usuario como en contraseña antes de comparar
-  const cleanUser = user.trim().toLowerCase();
-  const cleanPassword = password.trim();
-
-  const match = mockCredentials.find(
-    c => c.usuario.toLowerCase() === cleanUser && String(c.clave) === cleanPassword
-  );
-
-  if (match) {
-    localStorage.setItem('isUserAuthenticated', 'true');
-    localStorage.setItem('usuarioTipo', match.usuarioTipo);
-    localStorage.setItem('activeUser', match.usuario);
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
     
-    setError('');
-    setUser('');
-    setPassword('');
+    const cleanUser = user.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    const match = mockCredentials.find(
+      c => c.usuario.toLowerCase() === cleanUser && String(c.clave) === cleanPassword
+    );
+
+    if (match) {
+      // Guardado seguro en sessionStorage
+      sessionStorage.setItem('isUserAuthenticated', 'true');
+      sessionStorage.setItem('usuarioTipo', match.usuarioTipo);
+      sessionStorage.setItem('activeUser', match.usuario);
+      
+      setError('');
+      setUser('');
+      setPassword('');
+      setIsDropdownOpen(false);
+      
+      window.dispatchEvent(new Event('authSessionChanged'));
+      
+      // Redirección suave compatible con SPAs en producción
+      window.location.replace('/portal'); 
+    } else {
+      setError('Credenciales no válidas.');
+    }
+  };
+
+  // Función de Cierre de Sesión desde el Navbar
+  const handleNavbarLogout = () => {
+    sessionStorage.clear(); // Limpia todo el almacenamiento de la pestaña
+    setAuth({ active: false, type: '' });
     setIsDropdownOpen(false);
-    
+    setIsOpen(false);
     window.dispatchEvent(new Event('authSessionChanged'));
-    window.location.href = '/portal'; 
-  } else {
-    setError('Credenciales no válidas. Intenta con: admin/123456, profe/654321 o alumno/abcde');
-  }
-};
+    window.location.replace('/');
+  };
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -94,7 +106,11 @@ const handleLoginSubmit = (e) => {
               </a>
             ))}
             
-            {/* BOTÓN DESPLEGABLE CON CONTROL DE ROLES */}
+            <a href="/login" className="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all font-medium text-sm">
+              Zona Privada
+            </a>
+
+            {/* BOTÓN DESPLEGABLE */}
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -141,14 +157,21 @@ const handleLoginSubmit = (e) => {
                     </form>
                   ) : (
                     <div className="space-y-3 text-center">
-                      <p className="text-xs font-medium text-gray-600">Estás logueado como perfil de administración o docencia.</p>
+                      <p className="text-xs font-medium text-gray-600">Sesión activa como: <strong className="capitalize">{auth.type}</strong></p>
                       <a 
                         href="/portal" 
-                        className="block w-full bg-brand-primary text-white py-2 rounded-lg font-bold text-sm text-center"
+                        className="block w-full bg-brand-primary text-white py-2 rounded-lg font-bold text-sm text-center hover:bg-blue-800 transition-colors"
                         onClick={() => setIsDropdownOpen(false)}
                       >
                         Ir a mi Panel Escolar
                       </a>
+                      {/* SOLUCIÓN AL PROBLEMA: BOTÓN DE CIERRE DIRECTO EN EL NAVBAR */}
+                      <button 
+                        onClick={handleNavbarLogout}
+                        className="w-full mt-2 bg-red-50 text-red-600 py-2 rounded-lg font-bold text-sm hover:bg-red-100 transition-colors"
+                      >
+                        Cerrar Sesión
+                      </button>
                     </div>
                   )}
                 </div>
@@ -175,10 +198,26 @@ const handleLoginSubmit = (e) => {
               {item.name}
             </a>
           ))}
-   
-          <a href="/portal" className="block px-4 py-3 text-base font-bold text-brand-secondary">
-            Mi Panel Institucional
+          <a href="/login" className="block px-4 py-3 text-base font-bold text-brand-primary border-b border-gray-100">
+            Zona Privada
           </a>
+          {auth.active ? (
+            <>
+              <a href="/portal" className="block px-4 py-3 text-base font-bold text-brand-secondary border-b border-gray-100">
+                Mi Panel ({auth.type})
+              </a>
+              <button 
+                onClick={handleNavbarLogout}
+                className="block w-full text-left px-4 py-3 text-base font-bold text-red-600 bg-red-50"
+              >
+                Cerrar Sesión Activa
+              </button>
+            </>
+          ) : (
+            <a href="/portal" className="block px-4 py-3 text-base font-bold text-brand-secondary">
+              Mi Panel Institucional
+            </a>
+          )}
         </div>
       )}
     </nav>

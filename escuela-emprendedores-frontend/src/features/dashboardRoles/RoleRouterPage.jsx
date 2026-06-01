@@ -9,25 +9,24 @@ import Contact from '../contact/Contact';
 const RoleRouterPage = () => {
   const [session, setSession] = useState({ isAuthenticated: false, userType: '' });
 
-  useEffect(() => {
-    const readSession = () => {
-      const auth = localStorage.getItem('isUserAuthenticated') === 'true';
-      const type = localStorage.getItem('usuarioTipo') || '';
-      setSession({ isAuthenticated: auth, userType: type });
-    };
-
-    readSession();
-    window.addEventListener('authSessionChanged', readSession);
-    return () => window.removeEventListener('authSessionChanged', readSession);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('isUserAuthenticated');
-    localStorage.removeItem('usuarioTipo');
-    localStorage.removeItem('activeUser');
-    window.dispatchEvent(new Event('authSessionChanged'));
-    window.location.href = '/';
+useEffect(() => {
+  const readSession = () => {
+    // Cambiado de localStorage a sessionStorage
+    const auth = sessionStorage.getItem('isUserAuthenticated') === 'true';
+    const type = sessionStorage.getItem('usuarioTipo') || '';
+    setSession({ isAuthenticated: auth, userType: type });
   };
+
+  readSession();
+  window.addEventListener('authSessionChanged', readSession);
+  return () => window.removeEventListener('authSessionChanged', readSession);
+}, []);
+
+const handleLogout = () => {
+  sessionStorage.clear(); // Limpieza absoluta de la pestaña
+  window.dispatchEvent(new Event('authSessionChanged'));
+  window.location.replace('/'); // Reemplazo limpio de ruta
+};
 
   if (!session.isAuthenticated) {
     return (
