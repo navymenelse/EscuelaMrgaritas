@@ -1,5 +1,7 @@
 // src/features/dashboard-roles/TeacherDashboard.jsx
 import React from 'react';
+import PizarronForm from '../pizarron/PizarronForm';
+import PizarronList from '../pizarron/PizarronList';
 
 const TeacherDashboard = () => {
   return (
@@ -27,6 +29,12 @@ const TeacherDashboard = () => {
           </button>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+  <PizarronForm rolUsuario="profesor" />
+  <PizarronList rolUsuario="profesor" />
+</div>
+
     </div>
   );
 };

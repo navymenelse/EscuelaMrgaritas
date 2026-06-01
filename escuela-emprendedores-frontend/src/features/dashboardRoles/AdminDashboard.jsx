@@ -1,5 +1,7 @@
 // src/features/dashboard-roles/AdminDashboard.jsx
 import React from 'react';
+import PizarronForm from '../pizarron/PizarronForm';
+import PizarronList from '../pizarron/PizarronList';
 
 const AdminDashboard = () => {
   const cards = [
@@ -27,6 +29,10 @@ const AdminDashboard = () => {
           </div>
         ))}
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+  <PizarronForm rolUsuario="administracion" />
+  <PizarronList rolUsuario="administracion" />
+</div>
     </div>
   );
 };

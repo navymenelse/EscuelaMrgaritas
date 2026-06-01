@@ -1,5 +1,6 @@
 // src/features/dashboard-roles/StudentDashboard.jsx
 import React from 'react';
+import PizarronList from '../pizarron/PizarronList';
 
 const StudentDashboard = () => {
   return (
@@ -22,6 +23,9 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
+      <div className="mt-6">
+  <PizarronList rolUsuario="alumno" materiaAlumno="corte-costura" />
+</div>
     </div>
   );
 };
