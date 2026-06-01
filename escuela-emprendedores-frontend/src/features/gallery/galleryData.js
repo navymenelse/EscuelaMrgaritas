@@ -5,7 +5,7 @@ export const mediaItems = [
     type: "image",
     title: "Taller de Costura en Acción",
     description: "Estudiantes confeccionando prendas de vestir con técnicas avanzadas.",
-    src: "costura.png", 
+    src: "costura1.jpeg", 
     category: "Instalaciones"
   },
   {
@@ -13,7 +13,7 @@ export const mediaItems = [
     type: "image",
     title: "Creaciones de Repostería",
     description: "Exhibición de tortas y dulces elaborados por nuestros graduandos.",
-    src: "repostero.png",
+    src: "repostero2.jpeg",
     category: "Logros"
   },
   {
@@ -26,10 +26,10 @@ export const mediaItems = [
   },
   {
     id: 4,
-    type: "video",
+    type: "image",
     title: "Expo-Feria Socioproductiva 2025",
     description: "Video resumen de los proyectos presentados por los emprendedores.",
-    src: "https://www.w3schools.com/html/mov_bbb.mp4", // Video de ejemplo
+    src: "expo.jpeg", // Imagen de ejemplo
     category: "Eventos"
   },
   {
@@ -37,7 +37,7 @@ export const mediaItems = [
     type: "image",
     title: "Entrega de Certificados",
     description: "Celebrando el logro de una nueva cohorte de egresados.",
-    src: "certificados.png",
+    src: "certif.jpeg",
     category: "Eventos"
   },
   {
