@@ -188,31 +188,84 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+    {/* Mobile Menu Overlay */}
       {isOpen && (
-        <div className="md:hidden bg-brand-neutral border-t border-gray-200">
+        <div className="md:hidden bg-brand-neutral border-t border-gray-200 p-4 space-y-3">
           {menuItems.map((item) => (
-            <a key={item.name} href={item.path} className="block px-4 py-3 text-base text-gray-700 border-b border-gray-100">
+            <a 
+              key={item.name} 
+              href={item.path} 
+              className="block py-2 text-base text-gray-700 font-medium border-b border-gray-100"
+              onClick={() => setIsOpen(false)}
+            >
               {item.name}
             </a>
           ))}
-    
+          <a 
+            href="/login" 
+            className="block py-2 text-base font-bold text-brand-primary border-b border-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            Zona Privada
+          </a>
+          
+          {/* SECCIÓN DINÁMICA DE ADMINISTRACIÓN PARA MÓVIL */}
           {auth.active ? (
-            <>
-              <a href="/portal" className="block px-4 py-3 text-base font-bold text-brand-secondary border-b border-gray-100">
-                Mi Panel ({auth.type})
+            <div className="pt-2 space-y-2">
+              <div className="p-3 bg-green-50 rounded-xl border border-green-200">
+                <p className="text-xs text-green-800 font-medium">
+                  Sesión activa: <span className="capitalize font-bold">{auth.type}</span>
+                </p>
+              </div>
+              <a 
+                href="/portal" 
+                className="block w-full bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm text-center"
+                onClick={() => setIsOpen(false)}
+              >
+                Ir a mi Panel Escolar
               </a>
               <button 
                 onClick={handleNavbarLogout}
-                className="block w-full text-left px-4 py-3 text-base font-bold text-red-600 bg-red-50"
+                className="w-full bg-red-50 text-red-600 py-2.5 rounded-lg font-bold text-sm"
               >
                 Cerrar Sesión Activa
               </button>
-            </>
+            </div>
           ) : (
-            <a href="/portal" className="block px-4 py-3 text-base font-bold text-brand-secondary">
-              Mi Panel Institucional
-            </a>
+            /* FORMULARIO DE ACCESO MÓVIL DIRECTO */
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-inner mt-4">
+              <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-2 text-xs uppercase tracking-wider mb-3">
+                Acceso de Personal (Móvil)
+              </h4>
+              {error && <p className="text-xs bg-red-50 text-red-600 p-2 rounded-lg font-medium mb-2">{error}</p>}
+              <form onSubmit={handleLoginSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-500 mb-1">Usuario</label>
+                  <input 
+                    type="text" 
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-brand-primary" 
+                    placeholder="admin, profe o alumno"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-500 mb-1">Contraseña</label>
+                  <input 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-brand-primary"
+                    placeholder="Clave de prueba"
+                    required
+                  />
+                </div>
+                <button type="submit" className="w-full bg-brand-secondary text-white py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-orange-600 transition-colors">
+                  Ingresar al Sistema
+                </button>
+              </form>
+            </div>
           )}
         </div>
       )}
