@@ -1,9 +1,9 @@
-// src/features/dashboard-roles/GestionTablas.jsx
-import React, { useState } from 'react';
+// src/features/dashboardRoles/GestionTablas.jsx
+import React from 'react';
 import { mockProfesores, mockAlumnos, mockPersonalAdmin, mockCursos, mockEgresados } from './AdminData';
 
-const GestionTablas = () => {
-  const [activeTab, setActiveTab] = useState('profesores');
+// 1. Recibimos 'activeTab' y 'setActiveTab' directamente del padre
+const GestionTablas = ({ activeTab, setActiveTab }) => {
 
   const tabs = [
     { id: 'profesores', label: 'Profesores', icon: '👨‍🏫' },
@@ -13,36 +13,48 @@ const GestionTablas = () => {
     { id: 'egresados', label: 'Egresados', icon: '🎓' }
   ];
 
-  // Estilo común para las celdas de las tablas (diseño compacto)
+  // Estilos comunes para diseño compacto y responsivo
   const thStyle = "px-3 py-2 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200";
   const tdStyle = "px-3 py-2 text-xs text-gray-700 border-b border-gray-100 whitespace-nowrap";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6 animate-fade-in">
-      {/* Menú de Pestañas Navegables */}
-      <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-none bg-gray-50/50">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
-              activeTab === tab.id
-                ? 'border-brand-primary text-brand-primary bg-white'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
+      
+      {/* 2. EFECTO: Menú de pestañas dinámico */}
+      <div className="flex border-b border-gray-200 overflow-x-auto bg-gray-50/50 items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-2">
+          {tabs.map((tab) => {
+            const isSelected = activeTab === tab.id;
+            // Si está seleccionada se muestra completa; si no, en móviles se oculta para "apartarse"
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold border rounded-lg transition-all ${
+                  isSelected
+                    ? 'border-brand-primary text-brand-primary bg-blue-50/60'
+                    : 'border-transparent text-gray-400 hover:text-gray-600 hidden sm:flex' 
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        
+        {/* Un pequeño indicador de contexto para el usuario */}
+        <span className="text-[10px] bg-gray-100 text-gray-500 font-bold uppercase px-2 py-1 rounded-md">
+          Vista Activa
+        </span>
       </div>
 
-      {/* Contenedor de las Tablas con Scroll Horizontal Responsivo */}
+      {/* 3. CONTROL DE RENDIMIENTO: Despliegue de datos según la tarjeta activa */}
       <div className="p-4 overflow-x-auto">
         
         {/* TABLA: PROFESORES */}
         {activeTab === 'profesores' && (
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[700px] animate-fade-in">
             <thead>
               <tr>
                 <th className={thStyle}>Cédula</th>
@@ -68,7 +80,7 @@ const GestionTablas = () => {
 
         {/* TABLA: ALUMNOS */}
         {activeTab === 'alumnos' && (
-          <table className="w-full min-w-[750px]">
+          <table className="w-full min-w-[750px] animate-fade-in">
             <thead>
               <tr>
                 <th className={thStyle}>Cédula</th>
@@ -103,7 +115,7 @@ const GestionTablas = () => {
 
         {/* TABLA: PERSONAL ADMINISTRATIVO */}
         {activeTab === 'admin' && (
-          <table className="w-full min-w-[800px]">
+          <table className="w-full min-w-[800px] animate-fade-in">
             <thead>
               <tr>
                 <th className={thStyle}>Cédula</th>
@@ -131,7 +143,7 @@ const GestionTablas = () => {
 
         {/* TABLA: CURSOS */}
         {activeTab === 'cursos' && (
-          <table className="w-full min-w-[850px]">
+          <table className="w-full min-w-[850px] animate-fade-in">
             <thead>
               <tr>
                 <th className={thStyle}>Curso / Especialidad</th>
@@ -165,7 +177,7 @@ const GestionTablas = () => {
 
         {/* TABLA: EGRESADOS */}
         {activeTab === 'egresados' && (
-          <table className="w-full min-w-[800px]">
+          <table className="w-full min-w-[800px] animate-fade-in">
             <thead>
               <tr>
                 <th className={thStyle}>Cédula</th>
@@ -197,19 +209,3 @@ const GestionTablas = () => {
 };
 
 export default GestionTablas;
-
-/* ======================================================================
-  💡 COMENTARIOS PARA EL POSTERIOR AJUSTE CON BACKEND:
-  ======================================================================
-  Cuando se conecte la base de datos, este componente cambiará los arreglos 
-  estáticos por estados 'useState' y llamadas a la API de Supabase dentro de un 
-  'useEffect' que se dispare al cambiar de pestaña:
-
-  useEffect(() => {
-    const fetchDatos = async () => {
-      let { data, error } = await supabase.from(activeTab).select('*');
-      if (!error) setDatosTabla(data);
-    };
-    fetchDatos();
-  }, [activeTab]);
-*/

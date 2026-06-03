@@ -1,31 +1,113 @@
 // src/features/dashboard-roles/StudentDashboard.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import PizarronList from '../pizarron/PizarronList';
 
+// Importamos el nuevo sub-módulo de datos estudiantiles
+import GestionTablasStudent from './GestionTablasStudent';
+
 const StudentDashboard = () => {
+  // Estado para la tarjeta activa del estudiante (null = cerrado)
+  const [openCard, setOpenCard] = useState(null);
+
+  const studentCards = [
+    { id: "notas", title: "Mis Calificaciones", count: "Ver Notas", icon: "📊", desc: "Revisa tus notas acumuladas de evaluaciones y promedios finales." },
+    { id: "horario", title: "Mi Horario de Clases", count: "Cronograma", icon: "⏰", desc: "Consulta los días, horas y talleres asignados para tu formación." },
+    { id: "expediente", title: "Estatus Académico", count: "Matrícula", icon: "📋", desc: "Detalles de tu inscripción, modalidad y condición institucional." }
+  ];
+
+  const handleCardClick = (cardId) => {
+    setOpenCard(openCard === cardId ? null : cardId);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-xl">
-        <h2 className="text-xl font-bold text-gray-800">Panel de Control: Alumnos</h2>
-        <p className="text-xs text-gray-600">Consulta de material didáctico y estatus escolar.</p>
+      {/* Encabezado del módulo del Estudiante */}
+      <div className="bg-green-50 border-l-4 border-emerald-600 p-4 rounded-r-xl">
+        <h2 className="text-xl font-bold text-gray-800">Mi Panel Institucional</h2>
+        <p className="text-xs text-gray-600">Bienvenido a tu espacio de estudio. Aquí puedes hacer seguimiento a tus metas y aprendizajes.</p>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-4">📚 Mis Recursos de Aprendizaje</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-sm">
-            <span>📕 Guía de Patronaje Industrial.pdf</span>
-            <button className="text-brand-primary font-bold">Descargar</button>
+      {/* FLUJO FLEXIBLE DE TARJETA-ACCORDION CON EFECTO INVERSO */}
+      <div className="flex flex-wrap gap-4">
+        {studentCards.map((card) => {
+          const isOpen = openCard === card.id;
+          const anyCardIsOpen = openCard !== null;
+          const isDimmed = !isOpen && anyCardIsOpen;
+
+          return (
+            <React.Fragment key={card.id}>
+              {/* TARJETA INDIVIDUAL */}
+              <button
+                onClick={() => handleCardClick(card.id)}
+                className={`p-4 rounded-2xl border text-left transition-all duration-300 cursor-pointer flex flex-col justify-between h-40 grow shrink-0 w-full sm:w-[calc(50%-8px)] md:w-[calc(33.33%-11px)] ${
+                  isOpen
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-green-300 scale-[1.02]'
+                    : isDimmed
+                    ? 'bg-white/40 text-gray-300 border-gray-100 opacity-40 grayscale-[30%]'
+                    : 'bg-white text-gray-800 border-gray-100 shadow-sm hover:border-gray-300 hover:shadow'
+                }`}
+              >
+                <div className="w-full">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`text-2xl transition-transform ${isOpen ? 'scale-110' : ''} ${isDimmed ? 'opacity-30' : ''}`}>
+                      {card.icon}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded transition-colors ${
+                      isOpen ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-400'
+                    }`}>
+                      {card.count}
+                    </span>
+                  </div>
+                  
+                  {/* TÍTULO: Protagonismo en blanco si está activo */}
+                  <h3 className={`text-sm font-bold mb-1 tracking-tight transition-colors ${
+                    isOpen ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    {card.title}
+                  </h3>
+                  
+                  {/* DESCRIPCIÓN */}
+                  <p className={`text-[11px] leading-tight line-clamp-2 transition-colors ${
+                    isOpen ? 'text-green-50' : isDimmed ? 'text-gray-300' : 'text-gray-500'
+                  }`}>
+                    {card.desc}
+                  </p>
+                </div>
+                
+                {/* ACCIÓN INFERIOR */}
+                <div className={`mt-2 pt-2 border-t w-full text-right text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                  isOpen ? 'border-white/20 text-white' : 'border-gray-100 text-gray-400'
+                }`}>
+                  {isOpen ? '▲ Ocultar Información' : '▼ Ver Información'}
+                </div>
+              </button>
+
+              {/* DESPLIEGUE EN MÓVILES (INMEDIATAMENTE DEBAJO) */}
+              {isOpen && (
+                <div className="w-full lg:hidden block order-none animate-fade-in">
+                  <GestionTablasStudent activeTab={openCard} />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+
+        {/* DESPLIEGUE EN ESCRITORIO */}
+        {openCard && (
+          <div className="w-full hidden lg:block animate-fade-in pt-2">
+            <GestionTablasStudent activeTab={openCard} />
           </div>
-          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-sm">
-            <span>📘 Manual de Costura y Acabados.pdf</span>
-            <button className="text-brand-primary font-bold">Descargar</button>
-          </div>
-        </div>
+        )}
       </div>
-      <div className="mt-6">
-  <PizarronList rolUsuario="alumno" materiaAlumno="corte-costura" />
-</div>
+
+      {/* Bloque del Pizarrón Informativo */}
+      {/* Para los alumnos, ocultamos el Formulario de publicación (PizarronForm), ya que ellos solo tienen rol de lectores de anuncios institucionales */}
+      <div className="mt-8 max-w-3xl">
+        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 px-1">
+          📌 Cartelera de Anuncios Importantes
+        </h3>
+        <PizarronList rolUsuario="alumno" />
+      </div>
     </div>
   );
 };
