@@ -201,13 +201,7 @@ const Navbar = () => {
               {item.name}
             </a>
           ))}
-          <a 
-            href="/login" 
-            className="block py-2 text-base font-bold text-brand-primary border-b border-gray-100"
-            onClick={() => setIsOpen(false)}
-          >
-            Zona Privada
-          </a>
+  
           
           {/* SECCIÓN DINÁMICA DE ADMINISTRACIÓN PARA MÓVIL */}
           {auth.active ? (
