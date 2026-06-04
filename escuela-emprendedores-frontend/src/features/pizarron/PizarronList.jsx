@@ -35,6 +35,7 @@ const PizarronList = ({ rolUsuario }) => {
       const { data, error: supabaseError } = await query;
 
       if (supabaseError) throw supabaseError;
+    
       setAnuncios(data);
     } catch (err) {
       console.error('Error al cargar la cartelera:', err.message);

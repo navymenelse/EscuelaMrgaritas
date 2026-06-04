@@ -1,13 +1,15 @@
 // src/components/common/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../../supabaseClient'; // Asegúrate de que la ruta apunte a tu cliente de Supabase
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [auth, setAuth] = useState({ active: false, type: '' });
-  const [user, setUser] = useState('');
+  const [user, setUser] = useState(''); // Este campo servirá para Cédula o Correo electrónico
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false); // Estado para deshabilitar el botón mientras consulta
   const dropdownRef = useRef(null);
 
   const menuItems = [
@@ -19,15 +21,8 @@ const Navbar = () => {
     { name: 'Contacto', path: '/contact'}
   ];
 
-  const mockCredentials = [
-    { usuario: 'admin', clave: '123456', usuarioTipo: 'administracion' },
-    { usuario: 'profe', clave: '654321', usuarioTipo: 'profesor' },
-    { usuario: 'alumno', clave: 'abcde', usuarioTipo: 'alumno' }
-  ];
-
   useEffect(() => {
     const checkAuth = () => {
-      // Cambiado a sessionStorage para que expire al cerrar la pestaña
       const active = sessionStorage.getItem('isUserAuthenticated') === 'true';
       const type = sessionStorage.getItem('usuarioTipo') || '';
       setAuth({ active, type });
@@ -48,39 +43,61 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleLoginSubmit = (e) => {
+  // Manejador del Login Conectado Realmente a Supabase
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setCargando(true);
     
-    const cleanUser = user.trim().toLowerCase();
+    const cleanIdentifier = user.trim(); // No usamos toLowerCase() estricto por si la cédula lleva "V-" en mayúscula
     const cleanPassword = password.trim();
 
-    const match = mockCredentials.find(
-      c => c.usuario.toLowerCase() === cleanUser && String(c.clave) === cleanPassword
-    );
+    try {
+      // 1. Consultar a Supabase buscando coincidencia exacta por Cédula O por Correo Electrónico
+      const { data: usuario, error: supabaseError } = await supabase
+        .from('usuarios')
+        .select('*')
+        .or(`cedula.eq.${cleanIdentifier},correo.eq.${cleanIdentifier}`)
+        .maybeSingle(); // maybeSingle devuelve un objeto o null si no lo encuentra, evitando lanzar excepciones de Red
 
-    if (match) {
-      // Guardado seguro en sessionStorage
+      if (supabaseError) throw supabaseError;
+
+      if (!usuario) {
+        throw new Error('Usuario no registrado en la institución.');
+      }
+
+      // 2. Validación de Contraseña (Validación directa según nuestra semilla de datos de tesis)
+      if (usuario.password_hash !== cleanPassword) {
+        throw new Error('Contraseña institucional incorrecta.');
+      }
+
+      // 3. ÉXITO: Guardamos las variables oficiales de la base de datos en el almacenamiento de la sesión
       sessionStorage.setItem('isUserAuthenticated', 'true');
-      sessionStorage.setItem('usuarioTipo', match.usuarioTipo);
-      sessionStorage.setItem('activeUser', match.usuario);
+      sessionStorage.setItem('usuarioTipo', usuario.rol); // Guarda 'administracion', 'profesor' o 'alumno'
+      sessionStorage.setItem('activeUser', usuario.cedula);
       
-      setError('');
       setUser('');
       setPassword('');
       setIsDropdownOpen(false);
+      setIsOpen(false);
       
+      // Notificar a toda la App el cambio de sesión
       window.dispatchEvent(new Event('authSessionChanged'));
       
-      // Redirección suave compatible con SPAs en producción
+      // Redirección suave al portal escolar unificado
       window.location.replace('/portal'); 
-    } else {
-      setError('Credenciales no válidas.');
+
+    } catch (err) {
+      console.error('Error de autenticación:', err.message);
+      setError(err.message || 'Error de conexión con el servidor.');
+    } finally {
+      setCargando(false);
     }
   };
 
   // Función de Cierre de Sesión desde el Navbar
   const handleNavbarLogout = () => {
-    sessionStorage.clear(); // Limpia todo el almacenamiento de la pestaña
+    sessionStorage.clear(); 
     setAuth({ active: false, type: '' });
     setIsDropdownOpen(false);
     setIsOpen(false);
@@ -106,8 +123,6 @@ const Navbar = () => {
               </a>
             ))}
             
-   
-
             {/* BOTÓN DESPLEGABLE */}
             <div className="relative" ref={dropdownRef}>
               <button 
@@ -116,7 +131,7 @@ const Navbar = () => {
                   auth.active ? 'bg-green-600 text-white' : 'bg-brand-secondary text-white hover:bg-orange-600'
                 }`}
               >
-                💼 {auth.active ? `Portal: ${auth.type}` : 'Administración'} <span className="text-xs">▼</span>
+                {auth.active ? `🎒 Portal: ${auth.type}` : '💼 Acceso Institucional'} <span className="text-xs">▼</span>
               </button>
 
               {isDropdownOpen && (
@@ -128,14 +143,15 @@ const Navbar = () => {
                       </h4>
                       {error && <p className="text-xs bg-red-50 text-red-600 p-2 rounded-lg font-medium">{error}</p>}
                       <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1">Usuario</label>
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-1">Cédula o Correo</label>
                         <input 
                           type="text" 
                           value={user}
                           onChange={(e) => setUser(e.target.value)}
                           className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-primary" 
-                          placeholder="admin, profe o alumno"
+                          placeholder="Ej: V-10.000.001 o admin@escuela.com"
                           required
+                          disabled={cargando}
                         />
                       </div>
                       <div>
@@ -145,12 +161,17 @@ const Navbar = () => {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-primary"
-                          placeholder="Clave de prueba"
+                          placeholder="••••••••"
                           required
+                          disabled={cargando}
                         />
                       </div>
-                      <button type="submit" className="w-full bg-brand-primary text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-800 transition-colors">
-                        Acceder al Sistema
+                      <button 
+                        type="submit" 
+                        disabled={cargando}
+                        className="w-full bg-brand-primary text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-800 transition-colors disabled:bg-gray-300"
+                      >
+                        {cargando ? 'Verificando...' : 'Acceder al Sistema'}
                       </button>
                     </form>
                   ) : (
@@ -163,7 +184,6 @@ const Navbar = () => {
                       >
                         Ir a mi Panel Escolar
                       </a>
-                      {/* SOLUCIÓN AL PROBLEMA: BOTÓN DE CIERRE DIRECTO EN EL NAVBAR */}
                       <button 
                         onClick={handleNavbarLogout}
                         className="w-full mt-2 bg-red-50 text-red-600 py-2 rounded-lg font-bold text-sm hover:bg-red-100 transition-colors"
@@ -188,7 +208,7 @@ const Navbar = () => {
         </div>
       </div>
 
-    {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay */}
       {isOpen && (
         <div className="md:hidden bg-brand-neutral border-t border-gray-200 p-4 space-y-3">
           {menuItems.map((item) => (
@@ -202,7 +222,6 @@ const Navbar = () => {
             </a>
           ))}
   
-          
           {/* SECCIÓN DINÁMICA DE ADMINISTRACIÓN PARA MÓVIL */}
           {auth.active ? (
             <div className="pt-2 space-y-2">
@@ -234,14 +253,15 @@ const Navbar = () => {
               {error && <p className="text-xs bg-red-50 text-red-600 p-2 rounded-lg font-medium mb-2">{error}</p>}
               <form onSubmit={handleLoginSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 mb-1">Usuario</label>
+                  <label className="block text-[10px] font-semibold text-gray-500 mb-1">Cédula o Correo</label>
                   <input 
                     type="text" 
                     value={user}
                     onChange={(e) => setUser(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-brand-primary" 
-                    placeholder="admin, profe o alumno"
+                    placeholder="Ej: V-10.000.001 o admin@escuela.com"
                     required
+                    disabled={cargando}
                   />
                 </div>
                 <div>
@@ -251,12 +271,17 @@ const Navbar = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-brand-primary"
-                    placeholder="Clave de prueba"
+                    placeholder="••••••••"
                     required
+                    disabled={cargando}
                   />
                 </div>
-                <button type="submit" className="w-full bg-brand-secondary text-white py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-orange-600 transition-colors">
-                  Ingresar al Sistema
+                <button 
+                  type="submit" 
+                  disabled={cargando}
+                  className="w-full bg-brand-secondary text-white py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:bg-gray-300"
+                >
+                  {cargando ? 'Verificando...' : 'Ingresar al Sistema'}
                 </button>
               </form>
             </div>
