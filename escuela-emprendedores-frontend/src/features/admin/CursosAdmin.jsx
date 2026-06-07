@@ -1,52 +1,60 @@
 // src/features/admin/CursosAdmin.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
+import ConfiguradorHorario from '../../components/common/ConfiguradorHorario';
 
 const CursosAdmin = () => {
-  // Estados para la lista de datos
+  // Estados de datos provenientes de la Base de Datos
   const [cursos, setCursos] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  // Estados para el Formulario de Registro
+  // Estado para la creación en caliente de una nueva especialidad
+  const [mostrarNuevaEsp, setMostrarNuevaEsp] = useState(false);
+  const [nombreNuevaEsp, setNombreNuevaEsp] = useState('');
+
+  // Estados nativos del Formulario de Curso
   const [nombre, setNombre] = useState('');
   const [especialidadId, setEspecialidadId] = useState('');
   const [periodo, setPeriodo] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
-  const [horario, setHorario] = useState('');
   const [salon, setSalon] = useState('');
   const [estado, setEstado] = useState('activo');
 
-  // Estados de notificación
+  // Estados del Horario administrados localmente pero pasados al componente hijo
+  const [diasSeleccionados, setDiasSeleccionados] = useState([]);
+  const [horaInicio, setHoraInicio] = useState('08:00');
+  const [horaFin, setHoraFin] = useState('12:00');
+
+  // Control de notificaciones e hilos de carga
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   const [guardando, setGuardando] = useState(false);
 
-  // Cargar datos iniciales de Supabase
+  // Carga e indexación de datos desde Supabase
   const cargarDatos = async () => {
     try {
       setCargando(true);
       
-      // 1. Traer especialidades para el selector del formulario
+      // 1. Obtener especialidades académicas vigentes
       const { data: dataEsp, error: errEsp } = await supabase
         .from('especialidades')
         .select('*')
         .order('nombre', { ascending: true });
       if (errEsp) throw errEsp;
-      setEspecialidades(dataEsp);
+      setEspecialidades(dataEsp || []);
 
-      // 2. Traer cursos cruzando el nombre de su especialidad (Relación formal)
+      // 2. Obtener oferta de cursos y su relación relacional
       const { data: dataCur, error: errCur } = await supabase
         .from('cursos')
         .select(`
           id, nombre, periodo, fecha_inicio, horario, salon, estado,
           especialidades ( nombre )
-        `)
-        .order('creado_at', { ascending: false });
+        `);
       if (errCur) throw errCur;
-      setCursos(dataCur);
+      setCursos(dataCur || []);
 
     } catch (error) {
-      console.error('Error al cargar datos en el panel:', error.message);
+      console.error('Error en la sincronización local:', error.message);
     } finally {
       setCargando(false);
     }
@@ -56,10 +64,51 @@ const CursosAdmin = () => {
     cargarDatos();
   }, []);
 
-  // Procesar el registro del nuevo curso
+  // Manejador de selección de días (Pasado como callback al hijo)
+  const handleToggleDia = (diaId) => {
+    if (diasSeleccionados.includes(diaId)) {
+      setDiasSeleccionados(diasSeleccionados.filter(d => d !== diaId));
+    } else {
+      setDiasSeleccionados([...diasSeleccionados, diaId]);
+    }
+  };
+
+  // Registro expedito de Especialidades (Alta en caliente)
+  const handleCrearEspecialidad = async (e) => {
+    e.preventDefault();
+    if (!nombreNuevaEsp.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('especialidades')
+        .insert([{ nombre: nombreNuevaEsp.trim() }])
+        .select();
+
+      if (error) throw error;
+
+      setMensaje({ texto: '✨ Especialidad añadida correctamente.', tipo: 'exito' });
+      setNombreNuevaEsp('');
+      setMostrarNuevaEsp(false);
+      
+      await cargarDatos();
+      if (data && data[0]) {
+        setEspecialidadId(data[0].id);
+      }
+    } catch (err) {
+      setMensaje({ texto: err.message, tipo: 'error' });
+    }
+  };
+
+  // Procesamiento y almacenamiento estructurado del Curso
   const handleGuardarCurso = async (e) => {
     e.preventDefault();
-    if (!nombre.trim() || !periodo.trim() || !especialidadId) return;
+    if (!nombre.trim() || !especialidadId || diasSeleccionados.length === 0) {
+      setMensaje({ texto: 'Por favor, configure los días de clase.', tipo: 'error' });
+      return;
+    }
+
+    // Formateo semántico automatizado antes de la inserción en el esquema SQL
+    const horarioFormateado = `${diasSeleccionados.join(', ')} de ${horaInicio} a ${horaFin}`;
 
     try {
       setGuardando(true);
@@ -73,7 +122,7 @@ const CursosAdmin = () => {
             especialidad_id: especialidadId,
             periodo: periodo.trim(),
             fecha_inicio: fechaInicio,
-            horario: horario.trim(),
+            horario: horarioFormateado,
             salon: salon.trim(),
             estado: estado
           }
@@ -81,22 +130,18 @@ const CursosAdmin = () => {
 
       if (error) throw error;
 
-      setMensaje({ texto: '¡Curso registrado y publicado exitosamente en la web pública!', tipo: 'exito' });
+      setMensaje({ texto: '¡Curso publicado exitosamente!', tipo: 'exito' });
       
-      // Limpiar Formulario
+      // Limpieza de campos del formulario
       setNombre('');
-      setEspecialidadId('');
       setPeriodo('');
       setFechaInicio('');
-      setHorario('');
       setSalon('');
+      setDiasSeleccionados([]);
       
-      // Recargar la tabla inmediatamente sin reiniciar la página
       cargarDatos();
-
     } catch (err) {
-      console.error('Error al insertar curso:', err.message);
-      setMensaje({ texto: err.message || 'Error al guardar en la base de datos.', tipo: 'error' });
+      setMensaje({ texto: err.message, tipo: 'error' });
     } finally {
       setGuardando(false);
     }
@@ -104,18 +149,17 @@ const CursosAdmin = () => {
 
   return (
     <div className="p-6 space-y-8 bg-gray-50/50 min-h-screen">
-      {/* CABECERA */}
       <div>
         <h2 className="text-xl font-bold text-gray-800">Control de Oferta Académica</h2>
-        <p className="text-xs text-gray-500">Registra nuevos programas formativos para visualización y captación en la web principal.</p>
+        <p className="text-xs text-gray-500">Planificación estructural y publicación automatizada del catálogo de formación.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* COLUMNA 1: FORMULARIO DE REGISTRO INTUITIVO */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm h-fit">
-          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4 flex items-center gap-2 border-b pb-2">
-            🏫 Aperturar Nuevo Curso
+        {/* PANEL DE CONFIGURACIÓN Y APERTURA */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-4">
+          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider border-b pb-2">
+            <span>🏫 Aperturar Nuevo Curso</span>
           </h3>
 
           <form onSubmit={handleGuardarCurso} className="space-y-4">
@@ -125,26 +169,60 @@ const CursosAdmin = () => {
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Repostería Básica Comercial"
+                placeholder="Ej: Repostería Avanzada"
                 className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-brand-primary bg-gray-50/40"
                 required
               />
             </div>
 
+            {/* ÁREA DE ESPECIALIZACIÓN CON ACCESO DIRECTO RÁPIDO */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Especialidad / Área</label>
-              <select
-                value={especialidadId}
-                onChange={(e) => setEspecialidadId(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-brand-primary bg-gray-50/40 font-medium text-gray-700"
-                required
-              >
-                <option value="">Seleccione un área...</option>
-                {especialidades.map((esp) => (
-                  <option key={esp.id} value={esp.id}>{esp.nombre}</option>
-                ))}
-              </select>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Especialidad / Área de Estudio</label>
+              <div className="flex gap-2">
+                <select
+                  value={especialidadId}
+                  onChange={(e) => setEspecialidadId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-brand-primary bg-gray-50/40 font-medium text-gray-700"
+                  required
+                >
+                  <option value="">Seleccione un área...</option>
+                  {especialidades.map((esp) => (
+                    <option key={esp.id} value={esp.id}>{esp.nombre}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setMostrarNuevaEsp(!mostrarNuevaEsp)}
+                  className="px-3 bg-brand-primary text-white font-bold rounded-xl text-sm hover:bg-blue-600 transition-colors"
+                  title="Nueva Especialidad"
+                >
+                  +
+                </button>
+              </div>
             </div>
+
+            {/* SECCIÓN EXPANDIBLE PARA AGREGAR NUEVAS ESPECIALIDADES */}
+            {mostrarNuevaEsp && (
+              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100 space-y-2">
+                <label className="block text-[9px] font-bold text-blue-700 uppercase">Nueva Especialidad de Emprendimiento</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={nombreNuevaEsp}
+                    onChange={(e) => setNombreNuevaEsp(e.target.value)}
+                    placeholder="Ej: Costura Industrial"
+                    className="w-full px-3 py-1.5 text-xs border border-blue-200 rounded-lg bg-white outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCrearEspecialidad}
+                    className="px-3 py-1.5 bg-green-600 text-white font-bold rounded-lg text-xs uppercase"
+                  >
+                    Crear
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -170,21 +248,19 @@ const CursosAdmin = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Horario de Clases</label>
-              <input
-                type="text"
-                value={horario}
-                onChange={(e) => setHorario(e.target.value)}
-                placeholder="Ej: Martes y Jueves 1:00 PM a 4:30 PM"
-                className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-brand-primary bg-gray-50/40"
-                required
-              />
-            </div>
+            {/* IMPLEMENTACIÓN DEL COMPONENTE GLOBAL DE HORARIO */}
+            <ConfiguradorHorario
+              diasSeleccionados={diasSeleccionados}
+              onToggleDia={handleToggleDia}
+              horaInicio={horaInicio}
+              onHoraInicioChange={setHoraInicio}
+              horaFin={horaFin}
+              onHoraFinChange={setHoraFin}
+            />
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Ambiente / Salón</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Aula / Taller</label>
                 <input
                   type="text"
                   value={salon}
@@ -195,21 +271,20 @@ const CursosAdmin = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Estado de Apertura</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Estado Inicial</label>
                 <select
                   value={estado}
                   onChange={(e) => setEstado(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-brand-primary bg-gray-50/40 font-medium"
                 >
-                  <option value="activo">🟢 Activo / Oferta</option>
-                  <option value="planificacion">🟡 En Planificación</option>
-                  <option value="finalizado">🔴 Finalizado</option>
+                  <option value="activo">🟢 Activo</option>
+                  <option value="planificacion">🟡 Planificación</option>
                 </select>
               </div>
             </div>
 
             {mensaje.texto && (
-              <div className={`p-3 rounded-xl text-xs font-semibold ${
+              <div className={`p-2.5 rounded-xl text-xs font-semibold ${
                 mensaje.tipo === 'exito' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
               }`}>
                 {mensaje.texto}
@@ -219,22 +294,22 @@ const CursosAdmin = () => {
             <button
               type="submit"
               disabled={guardando}
-              className="w-full py-2.5 bg-brand-secondary text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-orange-600 transition-colors shadow-sm disabled:bg-gray-200"
+              className="w-full py-2.5 bg-brand-primary text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-blue-600 transition-colors shadow-sm disabled:bg-gray-200"
             >
-              {guardando ? 'Registrando...' : '💼 Lanzar Curso'}
+              {guardando ? 'Publicando...' : '💼 Registrar y Publicar'}
             </button>
           </form>
         </div>
 
-        {/* COLUMNA 2 Y 3: TABLA SCANNABLE DE CURSOS ACTUALES */}
+        {/* TABLA DE VISUALIZACIÓN DE LA OFERTA VIGENTE */}
         <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">
-              📋 Control de Cursos Publicados ({cursos.length})
+              📋 Cursos Publicados ({cursos.length})
             </h3>
 
             {cargando ? (
-              <p className="text-xs text-center py-10 text-gray-400 font-medium">Consultando base de datos en tiempo real...</p>
+              <p className="text-xs text-center py-10 text-gray-400 font-medium">Sincronizando con la institución...</p>
             ) : cursos.length === 0 ? (
               <p className="text-xs text-center py-10 text-gray-400 font-medium">No hay cursos registrados en el sistema aún.</p>
             ) : (
@@ -244,8 +319,8 @@ const CursosAdmin = () => {
                     <tr className="border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase bg-gray-50/50">
                       <th className="py-2.5 px-2">Curso / Área</th>
                       <th className="py-2.5 px-2">Período</th>
-                      <th className="py-2.5 px-2">Horario</th>
-                      <th className="py-2.5 px-2">Salón</th>
+                      <th className="py-2.5 px-2">Horario Configurado</th>
+                      <th className="py-2.5 px-2">Ambiente</th>
                       <th className="py-2.5 px-2 text-center">Estado</th>
                     </tr>
                   </thead>
@@ -254,15 +329,14 @@ const CursosAdmin = () => {
                       <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="py-3 px-2">
                           <p className="font-bold text-gray-800">{item.nombre}</p>
-                          <p className="text-[10px] text-gray-400 font-medium">{item.especialidades?.nombre || 'Sin Área asignada'}</p>
+                          <p className="text-[10px] text-gray-400 font-medium">{item.especialidades?.nombre || 'General'}</p>
                         </td>
                         <td className="py-3 px-2 font-medium text-gray-500">{item.periodo}</td>
-                        <td className="py-3 px-2 text-[11px] max-w-[150px] truncate" title={item.horario}>{item.horario}</td>
+                        <td className="py-3 px-2 text-[11px] font-medium text-gray-600">{item.horario}</td>
                         <td className="py-3 px-2 font-medium"><span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">{item.salon}</span></td>
                         <td className="py-3 px-2 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                            item.estado === 'activo' ? 'bg-green-50 text-green-600' : 
-                            item.estado === 'planificacion' ? 'bg-yellow-50 text-yellow-600' : 'bg-red-50 text-red-600'
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                            item.estado === 'activo' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'
                           }`}>
                             {item.estado}
                           </span>
