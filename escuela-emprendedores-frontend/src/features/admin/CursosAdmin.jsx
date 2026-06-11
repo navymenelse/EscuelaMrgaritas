@@ -4,16 +4,13 @@ import { supabase } from '../../supabaseClient';
 import ConfiguradorHorario from '../../components/common/ConfiguradorHorario';
 
 const CursosAdmin = () => {
-  // Estados de datos provenientes de la Base de Datos
   const [cursos, setCursos] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  // Estado para la creación en caliente de una nueva especialidad
   const [mostrarNuevaEsp, setMostrarNuevaEsp] = useState(false);
   const [nombreNuevaEsp, setNombreNuevaEsp] = useState('');
 
-  // Estados nativos del Formulario de Curso
   const [nombre, setNombre] = useState('');
   const [especialidadId, setEspecialidadId] = useState('');
   const [periodo, setPeriodo] = useState('');
@@ -21,40 +18,35 @@ const CursosAdmin = () => {
   const [salon, setSalon] = useState('');
   const [estado, setEstado] = useState('activo');
 
-  // Estados del Horario administrados localmente pero pasados al componente hijo
   const [diasSeleccionados, setDiasSeleccionados] = useState([]);
   const [horaInicio, setHoraInicio] = useState('08:00');
   const [horaFin, setHoraFin] = useState('12:00');
 
-  // Control de notificaciones e hilos de carga
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   const [guardando, setGuardando] = useState(false);
 
-  // Carga e indexación de datos desde Supabase
   const cargarDatos = async () => {
     try {
       setCargando(true);
       
-      // 1. Obtener especialidades académicas vigentes
+      // 1. Cargar especialidades
       const { data: dataEsp, error: errEsp } = await supabase
         .from('especialidades')
-        .select('*')
-        .order('nombre', { ascending: true });
-      if (errEsp) throw errEsp;
+        .select('*');
+      
+      if (errEsp) console.error("Error cargando especialidades:", errEsp.message);
       setEspecialidades(dataEsp || []);
 
-      // 2. Obtener oferta de cursos y su relación relacional
+      // 2. Cargar cursos de forma plana (Evitamos fallos por nombres de relación)
       const { data: dataCur, error: errCur } = await supabase
         .from('cursos')
-        .select(`
-          id, nombre, periodo, fecha_inicio, horario, salon, estado,
-          especialidades ( nombre )
-        `);
-      if (errCur) throw errCur;
+        .select('*');
+      
+      if (errCur) console.error("Error cargando cursos:", errCur.message);
       setCursos(dataCur || []);
 
     } catch (error) {
-      console.error('Error en la sincronización local:', error.message);
+      console.error('Error general de sincronización:', error.message);
     } finally {
       setCargando(false);
     }
@@ -64,7 +56,6 @@ const CursosAdmin = () => {
     cargarDatos();
   }, []);
 
-  // Manejador de selección de días (Pasado como callback al hijo)
   const handleToggleDia = (diaId) => {
     if (diasSeleccionados.includes(diaId)) {
       setDiasSeleccionados(diasSeleccionados.filter(d => d !== diaId));
@@ -73,12 +64,14 @@ const CursosAdmin = () => {
     }
   };
 
-  // Registro expedito de Especialidades (Alta en caliente)
+  // Crear especialidad blindada
   const handleCrearEspecialidad = async (e) => {
     e.preventDefault();
     if (!nombreNuevaEsp.trim()) return;
 
     try {
+      setMensaje({ texto: 'Procesando especialidad...', tipo: 'info' });
+      
       const { data, error } = await supabase
         .from('especialidades')
         .insert([{ nombre: nombreNuevaEsp.trim() }])
@@ -90,57 +83,60 @@ const CursosAdmin = () => {
       setNombreNuevaEsp('');
       setMostrarNuevaEsp(false);
       
-      await cargarDatos();
+      // Forzar recarga inmediata de la lista
+      const { data: refrescoEsp } = await supabase.from('especialidades').select('*');
+      setEspecialidades(refrescoEsp || []);
+      
       if (data && data[0]) {
         setEspecialidadId(data[0].id);
       }
     } catch (err) {
-      setMensaje({ texto: err.message, tipo: 'error' });
+      console.error("Error en inserción:", err.message);
+      setMensaje({ texto: `Error: ${err.message}`, tipo: 'error' });
     }
   };
 
-  // Procesamiento y almacenamiento estructurado del Curso
   const handleGuardarCurso = async (e) => {
     e.preventDefault();
     if (!nombre.trim() || !especialidadId || diasSeleccionados.length === 0) {
-      setMensaje({ texto: 'Por favor, configure los días de clase.', tipo: 'error' });
+      setMensaje({ texto: 'Por favor, complete todos los campos y horarios.', tipo: 'error' });
       return;
     }
 
-    // Formateo semántico automatizado antes de la inserción en el esquema SQL
     const horarioFormateado = `${diasSeleccionados.join(', ')} de ${horaInicio} a ${horaFin}`;
 
     try {
       setGuardando(true);
       setMensaje({ texto: '', tipo: '' });
 
+      const payload = {
+        nombre: nombre.trim(),
+        especialidad_id: especialidadId,
+        periodo: periodo.trim(),
+        fecha_inicio: fechaInicio,
+        horario: horarioFormateado,
+        salon: salon.trim(),
+        estado: estado
+      };
+
       const { error } = await supabase
         .from('cursos')
-        .insert([
-          {
-            nombre: nombre.trim(),
-            especialidad_id: especialidadId,
-            periodo: periodo.trim(),
-            fecha_inicio: fechaInicio,
-            horario: horarioFormateado,
-            salon: salon.trim(),
-            estado: estado
-          }
-        ]);
+        .insert([payload]);
 
       if (error) throw error;
 
       setMensaje({ texto: '¡Curso publicado exitosamente!', tipo: 'exito' });
       
-      // Limpieza de campos del formulario
       setNombre('');
       setPeriodo('');
       setFechaInicio('');
       setSalon('');
       setDiasSeleccionados([]);
+      setEspecialidadId('');
       
       cargarDatos();
     } catch (err) {
+      console.error("Error guardando curso:", err.message);
       setMensaje({ texto: err.message, tipo: 'error' });
     } finally {
       setGuardando(false);
@@ -156,7 +152,7 @@ const CursosAdmin = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* PANEL DE CONFIGURACIÓN Y APERTURA */}
+        {/* FORMULARIO */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-4">
           <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider border-b pb-2">
             <span>🏫 Aperturar Nuevo Curso</span>
@@ -175,7 +171,6 @@ const CursosAdmin = () => {
               />
             </div>
 
-            {/* ÁREA DE ESPECIALIZACIÓN CON ACCESO DIRECTO RÁPIDO */}
             <div>
               <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Especialidad / Área de Estudio</label>
               <div className="flex gap-2">
@@ -194,14 +189,12 @@ const CursosAdmin = () => {
                   type="button"
                   onClick={() => setMostrarNuevaEsp(!mostrarNuevaEsp)}
                   className="px-3 bg-brand-primary text-white font-bold rounded-xl text-sm hover:bg-blue-600 transition-colors"
-                  title="Nueva Especialidad"
                 >
                   +
                 </button>
               </div>
             </div>
 
-            {/* SECCIÓN EXPANDIBLE PARA AGREGAR NUEVAS ESPECIALIDADES */}
             {mostrarNuevaEsp && (
               <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100 space-y-2">
                 <label className="block text-[9px] font-bold text-blue-700 uppercase">Nueva Especialidad de Emprendimiento</label>
@@ -248,7 +241,6 @@ const CursosAdmin = () => {
               </div>
             </div>
 
-            {/* IMPLEMENTACIÓN DEL COMPONENTE GLOBAL DE HORARIO */}
             <ConfiguradorHorario
               diasSeleccionados={diasSeleccionados}
               onToggleDia={handleToggleDia}
@@ -285,7 +277,7 @@ const CursosAdmin = () => {
 
             {mensaje.texto && (
               <div className={`p-2.5 rounded-xl text-xs font-semibold ${
-                mensaje.tipo === 'exito' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                mensaje.tipo === 'exito' ? 'bg-green-50 text-green-700' : mensaje.tipo === 'info' ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'
               }`}>
                 {mensaje.texto}
               </div>
@@ -301,7 +293,7 @@ const CursosAdmin = () => {
           </form>
         </div>
 
-        {/* TABLA DE VISUALIZACIÓN DE LA OFERTA VIGENTE */}
+        {/* TABLA */}
         <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">
@@ -317,7 +309,7 @@ const CursosAdmin = () => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase bg-gray-50/50">
-                      <th className="py-2.5 px-2">Curso / Área</th>
+                      <th className="py-2.5 px-2">Curso</th>
                       <th className="py-2.5 px-2">Período</th>
                       <th className="py-2.5 px-2">Horario Configurado</th>
                       <th className="py-2.5 px-2">Ambiente</th>
@@ -325,24 +317,28 @@ const CursosAdmin = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 text-xs text-gray-700">
-                    {cursos.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="py-3 px-2">
-                          <p className="font-bold text-gray-800">{item.nombre}</p>
-                          <p className="text-[10px] text-gray-400 font-medium">{item.especialidades?.nombre || 'General'}</p>
-                        </td>
-                        <td className="py-3 px-2 font-medium text-gray-500">{item.periodo}</td>
-                        <td className="py-3 px-2 text-[11px] font-medium text-gray-600">{item.horario}</td>
-                        <td className="py-3 px-2 font-medium"><span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">{item.salon}</span></td>
-                        <td className="py-3 px-2 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                            item.estado === 'activo' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'
-                          }`}>
-                            {item.estado}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {cursos.map((item) => {
+                      // Buscar el nombre de la especialidad localmente de manera segura
+                      const espRelacionada = especialidades.find(e => e.id === item.especialidad_id);
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-3 px-2">
+                            <p className="font-bold text-gray-800">{item.nombre}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{espRelacionada ? espRelacionada.nombre : 'General'}</p>
+                          </td>
+                          <td className="py-3 px-2 font-medium text-gray-500">{item.periodo}</td>
+                          <td className="py-3 px-2 text-[11px] font-medium text-gray-600">{item.horario}</td>
+                          <td className="py-3 px-2 font-medium"><span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">{item.salon}</span></td>
+                          <td className="py-3 px-2 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                              item.estado === 'activo' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'
+                            }`}>
+                              {item.estado}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
