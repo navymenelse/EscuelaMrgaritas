@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import PizarronForm from '../pizarron/PizarronForm';
 import PizarronList from '../pizarron/PizarronList';
 import GestionTablasTeacher from './GestionTablasTeacher';
+import GestionNotasProfesor from './GestionNotasProfesor'; // 💡 Importamos el nuevo módulo de notas
 
-// 💡 Recibimos idUsuarioAuth desde el componente padre que controla el login general
 const TeacherDashboard = ({ idUsuarioAuth }) => {
-  // Guardamos el ID de la tarjeta del profesor que esté abierta (null = todas cerradas)
   const [openCard, setOpenCard] = useState(null);
 
   const teacherCards = [
@@ -17,6 +16,16 @@ const TeacherDashboard = ({ idUsuarioAuth }) => {
 
   const handleCardClick = (cardId) => {
     setOpenCard(openCard === cardId ? null : cardId);
+  };
+
+  // 💡 Función auxiliar para renderizar el componente adecuado según la tarjeta activa
+  const renderContenidoTab = (tabId) => {
+    if (tabId === 'alumnos') {
+      // Para las notas usamos el nuevo componente masivo
+      return <GestionNotasProfesor idUsuarioAuth={idUsuarioAuth} />;
+    }
+    // Para cursos y horarios seguimos usando la tabla general
+    return <GestionTablasTeacher activeTab={tabId} idUsuarioAuth={idUsuarioAuth} />;
   };
 
   return (
@@ -59,14 +68,12 @@ const TeacherDashboard = ({ idUsuarioAuth }) => {
                     </span>
                   </div>
                   
-                  {/* TÍTULO */}
                   <h3 className={`text-sm font-bold mb-1 tracking-tight transition-colors ${
                     isOpen ? 'text-white' : 'text-gray-800'
                   }`}>
                     {card.title}
                   </h3>
                   
-                  {/* DESCRIPCIÓN */}
                   <p className={`text-[11px] leading-tight line-clamp-2 transition-colors ${
                     isOpen ? 'text-orange-50' : isDimmed ? 'text-gray-300' : 'text-gray-500'
                   }`}>
@@ -74,30 +81,27 @@ const TeacherDashboard = ({ idUsuarioAuth }) => {
                   </p>
                 </div>
                 
-                {/* INDICADOR INFERIOR DE ACCIÓN */}
-                <div className={`mt-2 pt-2 border-t w-full text-right text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                <div className="mt-2 pt-2 border-t w-full text-right text-[10px] font-bold uppercase tracking-wider transition-colors ${
                   isOpen ? 'border-white/20 text-white' : 'border-gray-100 text-gray-400'
-                }`}>
+                }">
                   {isOpen ? '▲ Ocultar Tabla' : '▼ Desplegar'}
                 </div>
               </button>
 
-              {/* DESPLIEGUE RESPONSIVO DE TABLA EN MÓVILES (INMEDIATAMENTE DEBAJO) */}
+              {/* DESPLIEGUE RESPONSIVO DE TABLA EN MÓVILES */}
               {isOpen && (
                 <div className="w-full lg:hidden block order-none animate-fade-in">
-                  {/* 💡 Agregamos la prop idUsuarioAuth */}
-                  <GestionTablasTeacher activeTab={openCard} idUsuarioAuth={idUsuarioAuth} />
+                  {renderContenidoTab(openCard)}
                 </div>
               )}
             </React.Fragment>
           );
         })}
 
-        {/* DESPLIEGUE EN ESCRITORIO (DEBAJO DE LA LÍNEA DE TARJETAS) */}
+        {/* DESPLIEGUE EN ESCRITORIO */}
         {openCard && (
           <div className="w-full hidden lg:block animate-fade-in pt-2">
-            {/* 💡 Agregamos la prop idUsuarioAuth */}
-            <GestionTablasTeacher activeTab={openCard} idUsuarioAuth={idUsuarioAuth} />
+            {renderContenidoTab(openCard)}
           </div>
         )}
       </div>
