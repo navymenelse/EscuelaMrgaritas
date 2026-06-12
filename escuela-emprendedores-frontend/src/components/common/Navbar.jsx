@@ -177,7 +177,14 @@ const Navbar = () => {
                     </form>
                   ) : (
                     <div className="space-y-3 text-center">
-                      <p className="text-xs font-medium text-gray-600">Sesión activa como: <strong className="capitalize">{auth.type}</strong></p>
+                      {/* UX Mejorada: Texto convertido en enlace interactivo azul */}
+                      <a 
+                        href="/portal" 
+                        className="block text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-all bg-blue-50/50 py-1.5 rounded-lg border border-blue-100"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        🟢 Sesión activa como: <span className="capitalize font-bold">{auth.type}</span>
+                      </a>
                       <a 
                         href="/portal" 
                         className="block w-full bg-brand-primary text-white py-2 rounded-lg font-bold text-sm text-center hover:bg-blue-800 transition-colors"
@@ -226,11 +233,16 @@ const Navbar = () => {
           {/* SECCIÓN DINÁMICA DE ADMINISTRACIÓN PARA MÓVIL */}
           {auth.active ? (
             <div className="pt-2 space-y-2">
-              <div className="p-3 bg-green-50 rounded-xl border border-green-200">
+              {/* UX Mejorada Móvil: El contenedor entero ahora es un enlace interactivo de retorno */}
+              <a 
+                href="/portal"
+                className="block p-3 bg-green-50 active:bg-green-100 rounded-xl border border-green-200 text-center transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
                 <p className="text-xs text-green-800 font-medium">
-                  Sesión activa: <span className="capitalize font-bold">{auth.type}</span>
+                  🟢 Sesión activa: <span className="capitalize font-bold underline">{auth.type} (Volver)</span>
                 </p>
-              </div>
+              </a>
               <a 
                 href="/portal" 
                 className="block w-full bg-brand-primary text-white py-2.5 rounded-lg font-bold text-sm text-center"
