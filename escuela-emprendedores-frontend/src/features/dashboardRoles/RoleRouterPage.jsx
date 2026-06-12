@@ -5,28 +5,29 @@ import TeacherDashboard from './TeacherDashboard';
 import StudentDashboard from './StudentDashboard';
 import Contact from '../contact/Contact';
 
-
 const RoleRouterPage = () => {
-  const [session, setSession] = useState({ isAuthenticated: false, userType: '' });
+  // 💡 Añadimos userId al estado de la sesión
+  const [session, setSession] = useState({ isAuthenticated: false, userType: '', userId: '' });
 
-useEffect(() => {
-  const readSession = () => {
-    // Cambiado de localStorage a sessionStorage
-    const auth = sessionStorage.getItem('isUserAuthenticated') === 'true';
-    const type = sessionStorage.getItem('usuarioTipo') || '';
-    setSession({ isAuthenticated: auth, userType: type });
+  useEffect(() => {
+    const readSession = () => {
+      const auth = sessionStorage.getItem('isUserAuthenticated') === 'true';
+      const type = sessionStorage.getItem('usuarioTipo') || '';
+      const uid = sessionStorage.getItem('usuarioId') || ''; // 👈 Recuperamos el ID de autenticación de Supabase
+      
+      setSession({ isAuthenticated: auth, userType: type, userId: uid });
+    };
+
+    readSession();
+    window.addEventListener('authSessionChanged', readSession);
+    return () => window.removeEventListener('authSessionChanged', readSession);
+  }, []);
+
+  const handleLogout = () => {
+    sessionStorage.clear(); // Limpieza absoluta de la pestaña
+    window.dispatchEvent(new Event('authSessionChanged'));
+    window.location.replace('/'); // Reemplazo limpio de ruta
   };
-
-  readSession();
-  window.addEventListener('authSessionChanged', readSession);
-  return () => window.removeEventListener('authSessionChanged', readSession);
-}, []);
-
-const handleLogout = () => {
-  sessionStorage.clear(); // Limpieza absoluta de la pestaña
-  window.dispatchEvent(new Event('authSessionChanged'));
-  window.location.replace('/'); // Reemplazo limpio de ruta
-};
 
   if (!session.isAuthenticated) {
     return (
@@ -49,9 +50,10 @@ const handleLogout = () => {
         </button>
       </div>
 
-      {session.userType === 'administracion' && <AdminDashboard />}
-      {session.userType === 'profesor' && <TeacherDashboard />}
-      {session.userType === 'alumno' && <StudentDashboard />}
+      {/* 💡 Enviamos el userId correspondiente a cada Dashboard para amarrar las capas de ID */}
+      {session.userType === 'administracion' && <AdminDashboard idUsuarioAuth={session.userId} />}
+      {session.userType === 'profesor' && <TeacherDashboard idUsuarioAuth={session.userId} />}
+      {session.userType === 'alumno' && <StudentDashboard idUsuarioAuth={session.userId} />}
     </div>
   );
 };

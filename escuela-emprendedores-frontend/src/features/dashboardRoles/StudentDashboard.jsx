@@ -1,12 +1,9 @@
 // src/features/dashboard-roles/StudentDashboard.jsx
 import React, { useState } from 'react';
 import PizarronList from '../pizarron/PizarronList';
-
-// Importamos el nuevo sub-módulo de datos estudiantiles
 import GestionTablasStudent from './GestionTablasStudent';
 
-const StudentDashboard = () => {
-  // Estado para la tarjeta activa del estudiante (null = cerrado)
+const StudentDashboard = ({ idUsuarioAuth }) => { // 💡 Recibe el ID de sesión global
   const [openCard, setOpenCard] = useState(null);
 
   const studentCards = [
@@ -21,13 +18,11 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Encabezado del módulo del Estudiante */}
       <div className="bg-green-50 border-l-4 border-emerald-600 p-4 rounded-r-xl">
         <h2 className="text-xl font-bold text-gray-800">Mi Panel Institucional</h2>
         <p className="text-xs text-gray-600">Bienvenido a tu espacio de estudio. Aquí puedes hacer seguimiento a tus metas y aprendizajes.</p>
       </div>
 
-      {/* FLUJO FLEXIBLE DE TARJETA-ACCORDION CON EFECTO INVERSO */}
       <div className="flex flex-wrap gap-4">
         {studentCards.map((card) => {
           const isOpen = openCard === card.id;
@@ -36,7 +31,6 @@ const StudentDashboard = () => {
 
           return (
             <React.Fragment key={card.id}>
-              {/* TARJETA INDIVIDUAL */}
               <button
                 onClick={() => handleCardClick(card.id)}
                 className={`p-4 rounded-2xl border text-left transition-all duration-300 cursor-pointer flex flex-col justify-between h-40 grow shrink-0 w-full sm:w-[calc(50%-8px)] md:w-[calc(33.33%-11px)] ${
@@ -59,14 +53,12 @@ const StudentDashboard = () => {
                     </span>
                   </div>
                   
-                  {/* TÍTULO: Protagonismo en blanco si está activo */}
                   <h3 className={`text-sm font-bold mb-1 tracking-tight transition-colors ${
                     isOpen ? 'text-white' : 'text-gray-800'
                   }`}>
                     {card.title}
                   </h3>
                   
-                  {/* DESCRIPCIÓN */}
                   <p className={`text-[11px] leading-tight line-clamp-2 transition-colors ${
                     isOpen ? 'text-green-50' : isDimmed ? 'text-gray-300' : 'text-gray-500'
                   }`}>
@@ -74,7 +66,6 @@ const StudentDashboard = () => {
                   </p>
                 </div>
                 
-                {/* ACCIÓN INFERIOR */}
                 <div className={`mt-2 pt-2 border-t w-full text-right text-[10px] font-bold uppercase tracking-wider transition-colors ${
                   isOpen ? 'border-white/20 text-white' : 'border-gray-100 text-gray-400'
                 }`}>
@@ -82,26 +73,24 @@ const StudentDashboard = () => {
                 </div>
               </button>
 
-              {/* DESPLIEGUE EN MÓVILES (INMEDIATAMENTE DEBAJO) */}
+              {/* MÓVIL */}
               {isOpen && (
                 <div className="w-full lg:hidden block order-none animate-fade-in">
-                  <GestionTablasStudent activeTab={openCard} />
+                  <GestionTablasStudent activeTab={openCard} idUsuarioAuth={idUsuarioAuth} />
                 </div>
               )}
             </React.Fragment>
           );
         })}
 
-        {/* DESPLIEGUE EN ESCRITORIO */}
+        {/* ESCRITORIO */}
         {openCard && (
           <div className="w-full hidden lg:block animate-fade-in pt-2">
-            <GestionTablasStudent activeTab={openCard} />
+            <GestionTablasStudent activeTab={openCard} idUsuarioAuth={idUsuarioAuth} />
           </div>
         )}
       </div>
 
-      {/* Bloque del Pizarrón Informativo */}
-      {/* Para los alumnos, ocultamos el Formulario de publicación (PizarronForm), ya que ellos solo tienen rol de lectores de anuncios institucionales */}
       <div className="mt-8 max-w-3xl">
         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 px-1">
           📌 Cartelera de Anuncios Importantes

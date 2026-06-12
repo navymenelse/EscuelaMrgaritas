@@ -75,6 +75,7 @@ const Navbar = () => {
       sessionStorage.setItem('isUserAuthenticated', 'true');
       sessionStorage.setItem('usuarioTipo', usuario.rol); // Guarda 'administracion', 'profesor' o 'alumno'
       sessionStorage.setItem('activeUser', usuario.cedula);
+      sessionStorage.setItem('usuarioId', usuario.id);
       
       setUser('');
       setPassword('');
