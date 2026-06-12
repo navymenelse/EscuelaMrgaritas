@@ -4,7 +4,8 @@ import PizarronForm from '../pizarron/PizarronForm';
 import PizarronList from '../pizarron/PizarronList';
 import GestionTablasTeacher from './GestionTablasTeacher';
 
-const TeacherDashboard = () => {
+// 💡 Recibimos idUsuarioAuth desde el componente padre que controla el login general
+const TeacherDashboard = ({ idUsuarioAuth }) => {
   // Guardamos el ID de la tarjeta del profesor que esté abierta (null = todas cerradas)
   const [openCard, setOpenCard] = useState(null);
 
@@ -58,14 +59,14 @@ const TeacherDashboard = () => {
                     </span>
                   </div>
                   
-                  {/* TÍTULO: Garantiza protagonismo al cambiar a blanco puro al activarse */}
+                  {/* TÍTULO */}
                   <h3 className={`text-sm font-bold mb-1 tracking-tight transition-colors ${
                     isOpen ? 'text-white' : 'text-gray-800'
                   }`}>
                     {card.title}
                   </h3>
                   
-                  {/* DESCRIPCIÓN: Cambia a tono claro legible sobre el fondo naranja */}
+                  {/* DESCRIPCIÓN */}
                   <p className={`text-[11px] leading-tight line-clamp-2 transition-colors ${
                     isOpen ? 'text-orange-50' : isDimmed ? 'text-gray-300' : 'text-gray-500'
                   }`}>
@@ -84,7 +85,8 @@ const TeacherDashboard = () => {
               {/* DESPLIEGUE RESPONSIVO DE TABLA EN MÓVILES (INMEDIATAMENTE DEBAJO) */}
               {isOpen && (
                 <div className="w-full lg:hidden block order-none animate-fade-in">
-                  <GestionTablasTeacher activeTab={openCard} />
+                  {/* 💡 Agregamos la prop idUsuarioAuth */}
+                  <GestionTablasTeacher activeTab={openCard} idUsuarioAuth={idUsuarioAuth} />
                 </div>
               )}
             </React.Fragment>
@@ -94,12 +96,13 @@ const TeacherDashboard = () => {
         {/* DESPLIEGUE EN ESCRITORIO (DEBAJO DE LA LÍNEA DE TARJETAS) */}
         {openCard && (
           <div className="w-full hidden lg:block animate-fade-in pt-2">
-            <GestionTablasTeacher activeTab={openCard} />
+            {/* 💡 Agregamos la prop idUsuarioAuth */}
+            <GestionTablasTeacher activeTab={openCard} idUsuarioAuth={idUsuarioAuth} />
           </div>
         )}
       </div>
 
-      {/* Bloque del Pizarrón Informativo (Común para la visualización del docente) */}
+      {/* Bloque del Pizarrón Informativo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <PizarronForm rolUsuario="profesores" />
         <PizarronList rolUsuario="profesores" />

@@ -4,7 +4,8 @@ import TablaProfesores from './TablaProfesores'; // Tus componentes de control e
 import TablaAlumnos from './TablaAlumnos';
 import TablaAdmin from './TablaAdmin';
 import TablaEgresados from './TablaEgresados';
-import CursosAdmin from '../admin/CursosAdmin'; // 👈 Inyección del nuevo panel de control de cursos
+import CursosAdmin from '../admin/CursosAdmin'; 
+import AsignacionSecciones from './AsignarSecciones';
 
 const GestionTablas = ({ activeTab }) => {
   
@@ -18,6 +19,9 @@ const GestionTablas = ({ activeTab }) => {
       
     case 'admin':
       return <TablaAdmin />;
+
+    case 'aulas':
+      return <AsignacionSecciones />;
       
     case 'cursos':
       return <CursosAdmin />; // 👈 Reemplaza la vista estática por el módulo real conectado a Supabase

@@ -10,7 +10,10 @@ const AdminDashboard = () => {
   const cards = [
     { id: "profesores", title: "Profesores", count: "14 Activos", icon: "👨‍🏫", desc: "Gestión de nómina, asignación de cursos y horarios." },
     { id: "alumnos", title: "Alumnos", count: "185 Inscritos", icon: "🎒", desc: "Control de matrículas, asistencia y expedientes institucionales." },
-    { id: "admin", title: "Administración", count: "Configuración", icon: "⚙️", desc: "Auditoría del sistema, personal y reportes socioproductivos." },
+       { 
+      id: "aulas", title: "Asignación de Aulas", count: "Secciones", icon:"🏫", 
+      desc: "Vinculación de profesores titulares e inscripción de alumnos a las secciones académicos." 
+    },
     { id: "cursos", title: "Cursos Activos", count: "8 Especialidades", icon: "📚", desc: "Planificación de matrículas, horarios y salones de clase." },
     { id: "egresados", title: "Egresados", count: "42 Graduados", icon: "🎓", desc: "Historial de certificados emitidos y actas de grado de la escuela." }
   ];
